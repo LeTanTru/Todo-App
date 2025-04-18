@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Create issue in Redmine
         run: |
-          curl -X POST  https://1b9b-14-169-61-70.ngrok-free.app/issues.json \
+          curl -X POST https://1b9b-14-169-61-70.ngrok-free.app/issues.json \
           -H "Content-Type: application/json" \
           -H "X-Redmine-API-Key: ${{ secrets.REDMINE_API_KEY }}" \
           -d '{
