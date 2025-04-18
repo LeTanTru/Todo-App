@@ -1,11 +1,13 @@
-name: Create Redmine issue when GitHub issue is created
+name: Sync GitHub events to Redmine
 
 on:
   issues:
     types: [opened]
+  push:
 
 jobs:
-  sync-to-redmine:
+  sync-issue-created:
+    if: github.event_name == 'issues'
     runs-on: ubuntu-latest
     steps:
       - name: Create issue in Redmine
@@ -20,3 +22,28 @@ jobs:
               "description": "${{ github.event.issue.body }}"
             }
           }'
+
+  sync-commit-to-redmine:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync commits to Redmine
+        run: |
+          echo "Checking commits for issue references..."
+          echo "${{ toJson(github.event.commits) }}" | jq -c '.[]' | while read commit; do
+            message=$(echo "$commit" | jq -r '.message')
+            author=$(echo "$commit" | jq -r '.author.name')
+            url=$(echo "$commit" | jq -r '.url')
+            if [[ $message =~ \#([0-9]+) ]]; then
+              issue_id="${BASH_REMATCH[1]}"
+              echo "Found reference to issue #$issue_id"
+              curl -X POST https://1b9b-14-169-61-70.ngrok-free.app/issues/${issue_id}/journals.json \
+              -H "Content-Type: application/json" \
+              -H "X-Redmine-API-Key: ${{ secrets.REDMINE_API_KEY }}" \
+              -d "{
+                \"journal\": {
+                  \"notes\": \"Commit by $author: $message\n$URL\"
+                }
+              }"
+            fi
+          done
