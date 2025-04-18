@@ -1,1 +1,1 @@
-# This is a repo for CI issues to Redmine
+# This is a repo for CI issues to Redmine 2
